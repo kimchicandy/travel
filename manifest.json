@@ -1,0 +1,18 @@
+{
+  "name": "노상래 & 혜민 허니문 가이드",
+  "short_name": "허니문",
+  "description": "포르투갈·스페인 신혼여행 가이드 2026.3.29-4.11",
+  "start_url": "./최종 여행일정.html",
+  "display": "standalone",
+  "background_color": "#1A202C",
+  "theme_color": "#1A202C",
+  "orientation": "portrait",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>💍</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
