@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포르투 여행가이드 — Porto 2026</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #000000;
+            --accent-light: #F6F6F6;
+            --wine: #000000;
+            --wine-light: #F6F6F6;
+            --gold: #06C167;
+            --green: #06C167;
+            --bg: #FFFFFF;
+            --card: #FFFFFF;
+            --text: #000000;
+            --text-sub: #545454;
+            --text-muted: #999999;
+            --border: #EEEEEE;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans KR', -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ── */
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px; background: #000; border-bottom: none;
+            height: 52px; color: #fff;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(6,193,103,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .header h1 { font-size: 1rem; font-weight: 700; }
+        .header h1 span { color: #06C167; }
+        .header-meta { display: flex; gap: 8px; align-items: center; }
+        .meta-chip {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.68rem; font-weight: 500; color: #A0A0A0;
+            padding: 4px 10px; background: rgba(255,255,255,0.08); border-radius: 100px; border: 1px solid #333;
+        }
+        .back-btn {
+            display: flex; align-items: center; gap: 4px;
+            padding: 6px 12px; border-radius: 100px; border: 1px solid #333;
+            background: rgba(255,255,255,0.05); color: #fff; font-size: 0.7rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; transition: all 0.15s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--green); }
+
+        /* ── Section Nav (sticky tabs) ── */
+        .section-nav {
+            position: sticky; top: 52px; z-index: 90;
+            display: flex; gap: 0; background: #FFFFFF; border-bottom: 1px solid #EEE;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .section-nav::-webkit-scrollbar { display: none; }
+        .section-nav-btn {
+            flex-shrink: 0; padding: 12px 18px; border: none; background: none;
+            color: #999; font-size: 0.72rem; font-weight: 600; cursor: pointer;
+            font-family: inherit; transition: all 0.15s; border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .section-nav-btn:hover { color: #aaa; }
+        .section-nav-btn.active { color: #000; border-bottom-color: #06C167; }
+
+        /* ── Hero ── */
+        .hero {
+            position: relative; height: 300px; overflow: hidden;
+            background: #F7F7F7;
+            display: flex; align-items: center; justify-content: center;
+            color: #000;
+        }
+        .hero-content { text-align: center; z-index: 2; }
+        .hero-emoji { font-size: 3rem; margin-bottom: 12px; }
+        .hero-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
+        .hero-title span { color: #06C167; }
+        .hero-sub { font-size: 0.85rem; color: #545454; margin-top: 8px; line-height: 1.6; }
+        .hero-chips { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+        .hero-chip {
+            padding: 6px 14px; border-radius: 100px; font-size: 0.7rem; font-weight: 600;
+            background: #fff; border: 1px solid #EEE; color: #000;
+        }
+        .hero-bg-glow {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 400px; height: 400px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(6,193,103,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        /* ── Content Container ── */
+        .content { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+
+        /* ── Section ── */
+        .section { padding: 32px 0; border-bottom: 1px solid #EEE; }
+        .section:last-child { border-bottom: none; }
+        .section-header { margin-bottom: 20px; }
+        .section-title {
+            font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px;
+        }
+        .section-title::before {
+            content: ''; display: inline-block; width: 4px; height: 18px;
+            background: #06C167; border-radius: 2px;
+        }
+        .section-desc { font-size: 0.72rem; color: var(--text-sub); margin-top: 4px; }
+
+        /* ── Map Container ── */
+        .map-container {
+            width: 100%; height: 450px; border-radius: 16px; overflow: hidden;
+            border: 1px solid #EEE; margin-bottom: 20px;
+        }
+        .map-container-sm { height: 300px; }
+
+        /* ── POI Card ── */
+        .poi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+        .poi-card {
+            background: #fff; border: 1px solid #EEE; border-radius: 12px;
+            padding: 12px 14px; cursor: pointer; transition: all 0.2s;
+            display: flex; flex-direction: column; height: 100%;
+        }
+        .poi-card:hover { border-color: #06C167; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .poi-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .poi-name { font-size: 0.82rem; font-weight: 700; }
+        .poi-category {
+            display: none;
+        }
+        .poi-meta { font-size: 0.65rem; color: var(--gold); font-weight: 600; margin-bottom: 4px; }
+        .poi-desc { font-size: 0.68rem; color: var(--text-sub); line-height: 1.55; }
+        .poi-tags { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+        .poi-tag {
+            font-size: 0.58rem; font-weight: 600; padding: 2px 6px; border-radius: 8px;
+            background: #F6F6F6; color: var(--text-muted);
+        }
+        .poi-links { display: flex; gap: 4px; margin-top: 8px; }
+        .poi-link {
+            display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px;
+            font-size: 0.6rem; font-weight: 700; text-decoration: none; border: 1px solid var(--border);
+            color: var(--text-sub); transition: all 0.15s;
+        }
+        .poi-link:hover { border-color: #06C167; color: #000; }
+        .poi-link.naver { color: #03c75a; border-color: #1a3d2a; }
+        .poi-link.naver:hover { background: #03c75a; color: #fff; }
+        .poi-link.google { color: #4285f4; border-color: #1a2a3d; }
+        .poi-link.google:hover { background: #4285f4; color: #fff; }
+
+        /* ── Category Filter ── */
+        .filter-bar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 6px 14px; border-radius: 100px; border: 1px solid #DDD;
+            background: none; color: #999; font-size: 0.68rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .filter-btn:hover { color: #aaa; border-color: #555; }
+        .filter-btn.active { background: #000; color: #fff; border-color: #000; }
+
+        /* ── Voucher Card ── */
+        .voucher-card {
+            background: #000;
+            border: 2px solid #333; border-radius: 16px; padding: 20px 24px;
+            margin-bottom: 20px; position: relative; overflow: hidden;
+        }
+        .voucher-card::before {
+            content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(6,193,103,0.15), transparent 60%);
+            border-radius: 50%; pointer-events: none;
+        }
+        .voucher-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .voucher-icon { font-size: 1.5rem; }
+        .voucher-title { font-size: 0.85rem; font-weight: 800; }
+        .voucher-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .voucher-item { padding: 10px 12px; background: rgba(0,0,0,0.3); border-radius: 8px; }
+        .voucher-label { font-size: 0.6rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .voucher-value { font-size: 0.82rem; font-weight: 700; margin-top: 2px; }
+
+        /* ── Steps ── */
+        .step-list { display: flex; flex-direction: column; gap: 0; }
+        .step {
+            display: flex; gap: 14px; padding: 14px 0;
+            border-bottom: 1px solid #EEE;
+        }
+        .step:last-child { border-bottom: none; }
+        .step-num {
+            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800; color: #fff;
+            background: #000;
+        }
+        .step-content { flex: 1; }
+        .step-time { font-size: 0.65rem; color: var(--gold); font-weight: 700; }
+        .step-text { font-size: 0.72rem; line-height: 1.6; margin-top: 2px; }
+        .step-hint { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ── Hotel Glow ── */
+        .hotel-glow-anim {
+            animation: hotelPulse 2s ease-in-out infinite;
+        }
+        @keyframes hotelPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.5; }
+        }
+
+        /* ── Intro Block ── */
+        .intro-block {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 24px; margin-bottom: 24px;
+        }
+        .intro-block p { font-size: 0.78rem; line-height: 1.8; color: var(--text-sub); }
+        .intro-block strong { color: var(--gold); }
+        .intro-vs {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
+        }
+        .intro-vs-card {
+            padding: 14px; border-radius: 10px; text-align: center;
+        }
+        .intro-vs-card.lisbon { background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.06); }
+        .intro-vs-card.porto { background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08); }
+        .intro-vs-emoji { font-size: 1.5rem; margin-bottom: 6px; }
+        .intro-vs-name { font-size: 0.75rem; font-weight: 800; }
+        .intro-vs-desc { font-size: 0.65rem; color: var(--text-sub); margin-top: 4px; line-height: 1.4; }
+
+        /* ── Wine Guide ── */
+        .wine-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .wine-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px; text-align: center; transition: all 0.2s;
+        }
+        .wine-card:hover { border-color: #06C167; }
+        .wine-emoji { font-size: 2rem; margin-bottom: 8px; }
+        .wine-name { font-size: 0.78rem; font-weight: 800; color: #000; }
+        .wine-taste { font-size: 0.65rem; color: var(--text-sub); margin-top: 4px; }
+        .wine-tip { font-size: 0.62rem; color: var(--gold); font-weight: 600; margin-top: 6px; }
+
+        /* ── Shopping List ── */
+        .shop-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center;
+        }
+        .shop-emoji { font-size: 1.5rem; flex-shrink: 0; }
+        .shop-info { flex: 1; }
+        .shop-name { font-size: 0.78rem; font-weight: 700; }
+        .shop-meta { font-size: 0.65rem; color: var(--gold); margin-top: 2px; }
+        .shop-desc { font-size: 0.68rem; color: var(--text-sub); margin-top: 4px; line-height: 1.5; }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center; padding: 32px 16px; color: var(--text-muted);
+            font-size: 0.65rem; border-top: 1px solid #EEE;
+        }
+
+        /* ── Mobile ── */
+        /* ── My Location & Route ── */
+        .my-location-btn {
+            position: absolute; top: 80px; right: 12px; z-index: 50;
+            width: 36px; height: 36px; border-radius: 8px;
+            background: #fff; border: 1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+        }
+        .my-location-btn:hover { background: #f0f0f0; }
+        .my-location-btn.tracking { background: #e74c3c; border-color: #e74c3c; }
+        .my-location-btn.tracking span { filter: brightness(0) invert(1); }
+        .route-info-bar {
+            position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 50;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); color: #fff;
+            padding: 8px 16px; border-radius: 100px; font-size: 0.72rem; font-weight: 600;
+            display: none; align-items: center; gap: 8px; white-space: nowrap;
+            border: 1px solid #333;
+        }
+        .route-info-bar.visible { display: flex; }
+        .route-info-close {
+            background: none; border: none; color: #999; font-size: 14px; cursor: pointer;
+            padding: 0 0 0 6px;
+        }
+
+        /* ── View Mode Toggle ── */
+        .view-toggle {
+            display: flex; align-items: center;
+            background: rgba(255,255,255,0.08); border-radius: 100px; border: 1px solid #555;
+            padding: 2px; flex-shrink: 0;
+        }
+        .view-toggle-btn {
+            display: flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 100px; border: none;
+            background: none; color: #666; font-size: 0.62rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap;
+        }
+        .view-toggle-btn.active { background: #06C167; color: #000; }
+        .view-toggle-btn:hover:not(.active) { color: #aaa; }
+
+        /* ── Mobile Bottom Tab Bar ── */
+        .mobile-tab-bar {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+            background: #000; border-top: 1px solid #333;
+            padding: 0 0 env(safe-area-inset-bottom, 0);
+        }
+        .mobile-tab-bar-inner { display: flex; height: 56px; }
+        .mobile-tab {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; background: none; border: none; color: #666; cursor: pointer;
+            font-family: inherit; transition: color 0.15s; -webkit-tap-highlight-color: transparent;
+        }
+        .mobile-tab-icon { font-size: 1.1rem; line-height: 1; }
+        .mobile-tab-label { font-size: 0.55rem; font-weight: 600; }
+        .mobile-tab.active { color: #06C167; }
+        .mobile-tab.active::before {
+            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 28px; height: 2.5px; background: #06C167; border-radius: 0 0 2px 2px;
+        }
+        .mobile-tab { position: relative; }
+
+        /* ── Auto-responsive mobile ── */
+        @media (max-width: 768px) {
+            body:not(.desktop-mode) .header { padding: 8px 12px; height: 48px; }
+            body:not(.desktop-mode) .header h1 { font-size: 0.85rem; }
+            body:not(.desktop-mode) .meta-chip { display: none; }
+            body:not(.desktop-mode) .back-btn { display: none; }
+            body:not(.desktop-mode) .hero { height: 180px; }
+            body:not(.desktop-mode) .hero-title { font-size: 1.3rem; }
+            body:not(.desktop-mode) .hero-sub { font-size: 0.7rem; }
+            body:not(.desktop-mode) .hero-chips { display: none; }
+            body:not(.desktop-mode) .map-container { height: 300px; border-radius: 12px; }
+            body:not(.desktop-mode) .poi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            body:not(.desktop-mode) .voucher-grid { grid-template-columns: 1fr; }
+            body:not(.desktop-mode) .wine-grid { grid-template-columns: 1fr; gap: 8px; }
+            body:not(.desktop-mode) .intro-vs { grid-template-columns: 1fr; }
+            body:not(.desktop-mode) .content { padding: 0 12px; }
+            body:not(.desktop-mode) .mobile-tab-bar { display: block; }
+            body:not(.desktop-mode) .section-nav { display: none; }
+            body:not(.desktop-mode) .footer { padding-bottom: 72px; }
+        }
+
+        /* ── Force mobile mode via toggle ── */
+        .mobile-mode .header { padding: 8px 12px; height: 48px; }
+        .mobile-mode .header h1 { font-size: 0.85rem; }
+        .mobile-mode .meta-chip { display: none; }
+        .mobile-mode .back-btn { display: none; }
+        .mobile-mode .hero { height: 180px; }
+        .mobile-mode .hero-title { font-size: 1.3rem; }
+        .mobile-mode .hero-sub { font-size: 0.7rem; }
+        .mobile-mode .hero-chips { display: none; }
+        .mobile-mode .map-container { height: 300px; border-radius: 12px; }
+        .mobile-mode .poi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+        .mobile-mode .voucher-grid { grid-template-columns: 1fr; }
+        .mobile-mode .wine-grid { grid-template-columns: 1fr; gap: 8px; }
+        .mobile-mode .intro-vs { grid-template-columns: 1fr; }
+        .mobile-mode .content { padding: 0 12px; }
+        .mobile-mode .mobile-tab-bar { display: block; }
+        .mobile-mode .section-nav { display: none; }
+        .mobile-mode .footer { padding-bottom: 72px; }
+
+        /* ── Mobile: Fixed map top 40% + scroll bottom 60% ── */
+        .mobile-mode .mobile-map-fixed {
+            position: fixed; top: 48px; left: 0; right: 0; height: 40vh;
+            z-index: 10; border-bottom: 1px solid #EEE;
+            overflow: visible;
+        }
+        .mobile-mode .mobile-map-fixed .map-container {
+            height: calc(100% - 36px) !important; border-radius: 0 !important; border: none !important;
+        }
+        .mobile-mode .my-location-btn { display: none; }
+        .mobile-mode .mobile-scroll-content {
+            margin-top: calc(40vh + 48px); padding-bottom: 72px;
+        }
+        .mobile-mode .hero { display: none; }
+        .mobile-mode .section-nav { display: none; }
+
+        /* ── Force desktop mode ── */
+        .desktop-mode .mobile-tab-bar { display: none !important; }
+        .desktop-mode .section-nav { display: flex !important; }
+
+        /* Ultra-small screens: 1 column */
+        @media (max-width: 360px) {
+            .poi-grid { grid-template-columns: 1fr !important; }
+        }
+
+        /* smooth scroll */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+    <div class="header-left">
+        <a href="최종 여행일정.html" class="back-btn">← 전체 일정</a>
+        <div class="header-icon">🍷</div>
+        <h1>Porto <span>Guide</span></h1>
+    </div>
+    <div class="header-meta">
+        <div class="meta-chip">📅 3/31 ~ 4/3</div>
+        <div class="meta-chip">🌙 3박</div>
+        <div class="meta-chip">🏨 Porto Trindade</div>
+        <div class="view-toggle">
+            <button class="view-toggle-btn active" data-mode="desktop" onclick="setViewMode('desktop')">🖥 PC</button>
+            <button class="view-toggle-btn" data-mode="mobile" onclick="setViewMode('mobile')">📱 모바일</button>
+        </div>
+    </div>
+</header>
+
+<!-- ── Section Nav ── -->
+<nav class="section-nav">
+    <button class="section-nav-btn active" onclick="scrollToSection('hero')">소개</button>
+    <button class="section-nav-btn" onclick="scrollToSection('map')">🗺️ 지도</button>
+    <button class="section-nav-btn" onclick="scrollToSection('food')">🍽️ 맛집</button>
+    <button class="section-nav-btn" onclick="scrollToSection('spots')">📸 볼것</button>
+    <button class="section-nav-btn" onclick="scrollToSection('cafes')">☕ 카페/바</button>
+    <button class="section-nav-btn" onclick="scrollToSection('activities')">🎯 놀거리</button>
+    <button class="section-nav-btn" onclick="scrollToSection('wine')">🍷 와인</button>
+    <button class="section-nav-btn" onclick="scrollToSection('shopping')">🛍️ 쇼핑</button>
+    <button class="section-nav-btn" onclick="scrollToSection('bus')" style="color:#666;">✅ 이동기록</button>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero" id="hero">
+    <div class="hero-bg-glow"></div>
+    <div class="hero-content">
+        <div class="hero-emoji">🍷</div>
+        <h2 class="hero-title">Porto, <span>Portugal</span></h2>
+        <p class="hero-sub">
+            "여기서 땅이 끝나고 바다가 시작된다" — 아닌, 여기서 감성이 시작된다<br>
+            도우루 강변의 포트와인 한 잔으로 완성되는 도시
+        </p>
+        <div class="hero-chips">
+            <div class="hero-chip">🏨 Porto Trindade Hotel</div>
+            <div class="hero-chip">📅 3박 (3/31~4/3)</div>
+            <div class="hero-chip">🍷 포트와인의 본고장</div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Mobile Fixed Map ── -->
+<div class="mobile-map-fixed" id="mobileMapFixed">
+    <div class="filter-bar" id="mapFilterMobile" style="padding:6px 12px;margin:0;background:#fff;border-bottom:1px solid #EEE;">
+        <button class="filter-btn active" data-cat="all" onclick="filterPOI('all')">전체</button>
+        <button class="filter-btn" data-cat="food" onclick="filterPOI('food')">🍽️</button>
+        <button class="filter-btn" data-cat="spot" onclick="filterPOI('spot')">📸</button>
+        <button class="filter-btn" data-cat="cafe" onclick="filterPOI('cafe')">☕</button>
+        <button class="filter-btn" data-cat="activity" onclick="filterPOI('activity')">🎯</button>
+        <button class="filter-btn" data-cat="shop" onclick="filterPOI('shop')">🛍️</button>
+    </div>
+</div>
+
+<div class="content mobile-scroll-content">
+
+    <!-- ── 포르투 소개 ── -->
+    <section class="section" id="intro">
+        <div class="section-header">
+            <h3 class="section-title">포르투를 이해하는 법</h3>
+            <p class="section-desc">리스본이 "서울"이면, 포르투는 "부산+인천"</p>
+        </div>
+        <div class="intro-block">
+            <p>
+                포르투는 <strong>포트와인의 본고장</strong>이자 포르투갈 제2의 도시입니다.
+                리스본이 밝고 여유로운 수도의 느낌이라면, 포르투는 <strong>어둡고 밀도 높은 감성 도시</strong>입니다.
+                좁은 골목, 낡은 건물, 도우루 강에 반사되는 조명 — 이 모든 것이 "영화 속에 들어온 느낌"을 만듭니다.
+            </p>
+            <p style="margin-top:10px;">
+                포르투는 <strong>밤이 핵심</strong>인 도시입니다. 낮에 실망해도 정상 — 해질녘부터 도시가 변합니다.
+                강변에 앉아 타우니 포트와인 한 잔을 들고, 건너편 리베이라의 야경을 바라보는 것.
+                그것이 포르투의 정답입니다.
+            </p>
+            <div class="intro-vs">
+                <div class="intro-vs-card lisbon">
+                    <div class="intro-vs-emoji">☀️</div>
+                    <div class="intro-vs-name">리스본</div>
+                    <div class="intro-vs-desc">밝음 · 여유 · 관광<br>낮이 핵심<br>"여행 왔다" 느낌</div>
+                </div>
+                <div class="intro-vs-card porto">
+                    <div class="intro-vs-emoji">🌙</div>
+                    <div class="intro-vs-name">포르투</div>
+                    <div class="intro-vs-desc">어둠 · 감성 · 밀도<br>밤이 핵심<br>"영화 속" 느낌</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── 포르투 전체 지도 ── -->
+    <section class="section" id="map">
+        <div class="section-header">
+            <h3 class="section-title">포르투 맵</h3>
+            <p class="section-desc">숙소 중심 · 맛집/명소/카페 한눈에</p>
+        </div>
+        <div class="filter-bar" id="mapFilter">
+            <button class="filter-btn active" data-cat="all" onclick="filterPOI('all')">전체</button>
+            <button class="filter-btn" data-cat="food" onclick="filterPOI('food')">🍽️ 맛집</button>
+            <button class="filter-btn" data-cat="spot" onclick="filterPOI('spot')">📸 명소</button>
+            <button class="filter-btn" data-cat="cafe" onclick="filterPOI('cafe')">☕ 카페</button>
+            <button class="filter-btn" data-cat="activity" onclick="filterPOI('activity')">🎯 놀거리</button>
+            <button class="filter-btn" data-cat="shop" onclick="filterPOI('shop')">🛍️ 쇼핑</button>
+        </div>
+        <div style="position:relative;" id="desktopMapSlot">
+            <div class="map-container" id="mainMap"></div>
+            <button class="my-location-btn" id="myLocBtn" onclick="toggleMyLocation()" title="내 위치"><span>📍</span></button>
+            <div class="route-info-bar" id="routeInfo">
+                <span id="routeInfoText">🚶 도보 0분 · 0m</span>
+                <button class="route-info-close" onclick="clearRoute()">✕</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── 맛집 ── -->
+    <section class="section" id="food">
+        <div class="section-header">
+            <h3 class="section-title">맛집 가이드</h3>
+            <p class="section-desc">구글 리뷰 + 현지 평가 기반 · 호텔 도보권 중심</p>
+        </div>
+        <div class="poi-grid" id="foodGrid">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- ── 볼것 ── -->
+    <section class="section" id="spots">
+        <div class="section-header">
+            <h3 class="section-title">명소 가이드</h3>
+            <p class="section-desc">유네스코 세계유산 · 아줄레주 · 전망대</p>
+        </div>
+        <div class="poi-grid" id="spotsGrid">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- ── 카페/바 ── -->
+    <section class="section" id="cafes">
+        <div class="section-header">
+            <h3 class="section-title">카페 & 바</h3>
+            <p class="section-desc">스페셜티 커피 · 포트와인 바 · 루프탑</p>
+        </div>
+        <div class="poi-grid" id="cafesGrid">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- ── 놀거리 ── -->
+    <section class="section" id="activities">
+        <div class="section-header">
+            <h3 class="section-title">놀거리 & 체험</h3>
+            <p class="section-desc">와이너리 투어 · 크루즈 · 툭툭 · 쇼핑</p>
+        </div>
+        <div class="poi-grid" id="activitiesGrid">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- ── 포트와인 가이드 ── -->
+    <section class="section" id="wine">
+        <div class="section-header">
+            <h3 class="section-title">포트와인 가이드</h3>
+            <p class="section-desc">이것만 알면 됩니다</p>
+        </div>
+        <div class="wine-grid">
+            <div class="wine-card">
+                <div class="wine-emoji">🔴</div>
+                <div class="wine-name">Ruby</div>
+                <div class="wine-taste">진하고 달달함</div>
+                <div class="wine-tip">초보자에게 추천<br>과일 향 풍부</div>
+            </div>
+            <div class="wine-card" style="border-color:#06C167;">
+                <div class="wine-emoji">🥃</div>
+                <div class="wine-name">Tawny ★</div>
+                <div class="wine-taste">부드럽고 견과류 향</div>
+                <div class="wine-tip">가장 추천!<br>"Tawny port, please"</div>
+            </div>
+            <div class="wine-card">
+                <div class="wine-emoji">🥂</div>
+                <div class="wine-name">White</div>
+                <div class="wine-taste">가볍고 시원함</div>
+                <div class="wine-tip">토닉워터와 섞어<br>White Port & Tonic</div>
+            </div>
+        </div>
+        <div style="margin-top:16px;padding:14px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
+            <p style="font-size:0.72rem;color:var(--text-sub);line-height:1.6;">
+                <strong style="color:#06C167;">💡 주문 팁:</strong> 대부분 바에서 잔(glass)으로 판매. €3~6 수준. 식사 후 디저트 와인으로 마시거나, 강변에서 경치 보며 한잔하면 완벽. 와인 셀러 투어보다 <strong>바에서 편하게 마시는 것</strong>을 추천합니다.
+            </p>
+        </div>
+    </section>
+
+    <!-- ── 쇼핑 ── -->
+    <section class="section" id="shopping">
+        <div class="section-header">
+            <h3 class="section-title">쇼핑 가이드</h3>
+            <p class="section-desc">10명 선물용 · 시내에서 사고, 공항은 보충만</p>
+        </div>
+        <div class="shop-card">
+            <div class="shop-emoji">🧼</div>
+            <div class="shop-info">
+                <div class="shop-name">Claus Porto Store</div>
+                <div class="shop-meta">포르투갈 비누 · €5~10/개 · 가성비 최강 선물</div>
+                <div class="shop-desc">디자인 예쁜 고급 비누. 10명 선물용으로 최적. 가볍고 안 깨짐. 남녀 모두 만족.</div>
+            </div>
+        </div>
+        <div class="shop-card">
+            <div class="shop-emoji">🍷</div>
+            <div class="shop-info">
+                <div class="shop-name">Garrafeira do Carmo</div>
+                <div class="shop-meta">포트와인 전문 · €8~20/병 · 중요한 사람용</div>
+                <div class="shop-desc">관광지 대비 가격 합리적. Tawny 미니병 추천. 직원 추천 잘해줌. 5개만 사서 핵심 인원에게.</div>
+            </div>
+        </div>
+        <div class="shop-card">
+            <div class="shop-emoji">🐟</div>
+            <div class="shop-info">
+                <div class="shop-name">A Vida Portuguesa</div>
+                <div class="shop-meta">감성 통조림+기념품 · €3~15 · "유럽 갔다온 느낌"</div>
+                <div class="shop-desc">정어리 통조림 패키지 디자인이 미침. 가볍고 안 깨짐. 비누 대체용으로도 좋음.</div>
+            </div>
+        </div>
+        <div style="margin-top:16px;padding:14px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
+            <p style="font-size:0.72rem;color:var(--text-sub);line-height:1.6;">
+                <strong style="color:var(--gold);">🎁 10명 최적 조합:</strong> 비누 10개 (기본) + 포트와인 4개 (핵심 인원) + 통조림/초콜릿 보충. 시내에서 구매하면 공항 대비 10~30% 저렴. 와인은 옷 사이에 넣어 캐리어 수하물로.
+            </p>
+        </div>
+    </section>
+
+    <!-- ── 버스 이동 섹션 (완료) ── -->
+    <section class="section" id="bus" style="opacity:0.7;">
+        <div class="section-header">
+            <h3 class="section-title" style="color:#666;">✅ 리스본 → 포르투 이동 (완료)</h3>
+            <p class="section-desc">3/31(화) 무사히 도착 완료! 아래는 기록용입니다.</p>
+        </div>
+        <div class="voucher-card" style="opacity:0.8;">
+            <div class="voucher-header">
+                <div class="voucher-icon">🚌</div>
+                <div class="voucher-title">버스 바우처 정보</div>
+            </div>
+            <div class="voucher-grid">
+                <div class="voucher-item"><div class="voucher-label">예약번호</div><div class="voucher-value" style="color:#06C167;cursor:pointer;" onclick="copyText('188IDOY6JJ')">188IDOY6JJ 📋</div></div>
+                <div class="voucher-item"><div class="voucher-label">좌석</div><div class="voucher-value">노상래 44번 · 혜민 43번</div></div>
+                <div class="voucher-item"><div class="voucher-label">출발</div><div class="voucher-value">16:30 · Sete Rios 터미널</div></div>
+                <div class="voucher-item"><div class="voucher-label">도착</div><div class="voucher-value">19:45 · Porto Campanhã</div></div>
+                <div class="voucher-item"><div class="voucher-label">소요시간</div><div class="voucher-value">약 3시간 15분</div></div>
+                <div class="voucher-item"><div class="voucher-label">운영사</div><div class="voucher-value">Rede Expressos</div></div>
+            </div>
+        </div>
+        <div class="map-container map-container-sm" id="busMap"></div>
+    </section>
+
+</div>
+
+<!-- ── Mobile Tab Bar ── -->
+<nav class="mobile-tab-bar" id="mobileTabBar">
+    <div class="mobile-tab-bar-inner">
+        <button class="mobile-tab active" onclick="mobileNav('hero')">
+            <span class="mobile-tab-icon">🍷</span>
+            <span class="mobile-tab-label">소개</span>
+        </button>
+        <button class="mobile-tab" onclick="mobileNav('bus')">
+            <span class="mobile-tab-icon">🚌</span>
+            <span class="mobile-tab-label">이동</span>
+        </button>
+        <button class="mobile-tab" onclick="mobileNav('map')">
+            <span class="mobile-tab-icon">🗺️</span>
+            <span class="mobile-tab-label">지도</span>
+        </button>
+        <button class="mobile-tab" onclick="mobileNav('food')">
+            <span class="mobile-tab-icon">🍽️</span>
+            <span class="mobile-tab-label">맛집</span>
+        </button>
+        <button class="mobile-tab" onclick="mobileNav('spots')">
+            <span class="mobile-tab-icon">📸</span>
+            <span class="mobile-tab-label">명소</span>
+        </button>
+        <button class="mobile-tab" onclick="mobileNav('wine')">
+            <span class="mobile-tab-icon">🍷</span>
+            <span class="mobile-tab-label">와인</span>
+        </button>
+    </div>
+</nav>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+    <p>🍷 Honeymoon Porto Guide — 노상래 & 혜민 · 2026.03.31~04.03</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Hotel & Key Locations ──
+const hotel = { lat: 41.1520, lng: -8.6100, name: 'Porto Trindade Hotel' };
+const campanha = { lat: 41.1489, lng: -8.5856, name: 'Porto Campanhã 역' };
+const seteRios = { lat: 38.7389, lng: -9.1712, name: 'Sete Rios 터미널' };
+
+// ── POI Data ──
+const pois = [
+    // 맛집
+    { name: 'Brasão Cervejaria', cat: 'food', lat: 41.1488, lng: -8.6110, price: '€€', desc: '포르투 프란세지냐 1등. 관광객 많지만 퀄리티 압도적. 맥주와 함께 먹으면 완성.', must: '프란세지냐', rating: '4.6', walk: '도보 3분', hours: '12:00~23:00 (브레이크 없음)', review: '긍정: 프란세지냐 맛은 확실. 소스가 진하고 양도 넉넉. 부정: 관광객 많아 30분+ 웨이팅 흔함.' },
+    { name: 'Café Santiago', cat: 'food', lat: 41.1480, lng: -8.6070, price: '€€', desc: '프란세지냐 원조 맛집. 로컬도 인정하는 치즈+소스 폭탄 샌드위치. 웨이팅 있을 수 있음.', must: '프란세지냐 스페셜', rating: '4.4', walk: '도보 5분', hours: '12:00~23:00 (브레이크 없음)', review: '긍정: 원조답게 소스 깊이가 다름. 가성비 좋음. 부정: 좁고 시끄러움. 서비스 무뚝뚝.' },
+    { name: 'Taberna dos Mercadores', cat: 'food', lat: 41.1410, lng: -8.6120, price: '€€', desc: '로컬 감성 + 음식 퀄 최고. 문어구이·바칼랴우 추천. 가게 작아 예약 필수.', must: '문어 그릴', rating: '4.5', walk: '도보 12분', hours: '12:30~15:00, 19:00~22:30', review: '긍정: 문어구이 환상적. 골목 분위기 최고. 부정: 자리가 적어 예약 필수. 가격 약간 높음.' },
+    { name: 'Casa Guedes', cat: 'food', lat: 41.1530, lng: -8.6095, price: '€', desc: '포크 샌드위치 가성비 끝판왕. 치즈 추가 필수! 가볍게 한 끼에 딱.', must: '포크 샌드위치+치즈', rating: '4.3', walk: '도보 4분', hours: '10:00~22:00 (일 휴무)', review: '긍정: 포크 샌드위치+치즈 조합 중독성. €5 이하. 부정: 서서 먹어야 할 때 많음.' },
+    { name: 'Cantinho do Avillez', cat: 'food', lat: 41.1445, lng: -8.6130, price: '€€€', desc: '미슐랭 셰프 José Avillez의 캐주얼 레스토랑. 창의적인 포르투갈 요리.', must: '셰프 추천 코스', rating: '4.5', walk: '도보 8분', hours: '12:30~15:00, 19:00~23:00', review: '긍정: 미슐랭 셰프 캐주얼 레스토랑답게 요리 수준 높음. 부정: 예약 없으면 입장 어려움.' },
+    { name: 'DOP', cat: 'food', lat: 41.1450, lng: -8.6110, price: '€€€', desc: '미슐랭 1스타. 포르투갈 모던 퀴진 최고봉. 특별한 디너에 추천.', must: '테이스팅 메뉴', rating: '4.7', walk: '도보 7분', hours: '12:30~15:00, 19:30~22:30', review: '긍정: 미슐랭급 플레이팅과 맛. 특별한 날 완벽. 부정: 가격대 높음. 드레스코드 있음.' },
+    { name: 'O Gaveto', cat: 'food', lat: 41.1830, lng: -8.6880, price: '€€€', desc: '마투지뉴스 해변 해산물 끝판왕. 시내에서 트램 20분. 신선함이 다름.', must: '해산물 플래터', rating: '4.6', walk: '트램 20분', hours: '12:00~15:30, 19:00~22:30', review: '긍정: 해산물 신선도 최상급. 리조또 양 푸짐. 부정: 시내에서 멀어 이동 필요.' },
+    { name: 'Gazela Cachorrinhos', cat: 'food', lat: 41.1490, lng: -8.6090, price: '€', desc: '포르투 로컬 핫도그 €2.5. 작은 가게에 항상 줄. 아침/간식용으로 최고.', must: '카쇼링요', rating: '4.2', walk: '도보 3분', hours: '12:00~22:30 (일 휴무)', review: '긍정: 매운 소시지 핫도그 €2.5 가성비 끝판왕. 부정: 좁고 줄 있음.' },
+    { name: '히베이라 강변 레스토랑', cat: 'food', lat: 41.1405, lng: -8.6130, price: '€€', desc: '도우루 강변 뷰 레스토랑. 음식보다 분위기. 해산물+포트와인 페어링.', must: '해산물+뷰', rating: '4.0', walk: '도보 15분', hours: '11:00~23:00', review: '긍정: 도우루 강변 뷰가 압도적. 부정: 관광지 가격. 음식은 보통.' },
+
+    // 명소
+    { name: 'São Bento 역', cat: 'spot', lat: 41.1455, lng: -8.6103, price: '무료', desc: '2만 장 아줄레주 타일로 장식된 세계에서 가장 아름다운 기차역. 포르투 필수 코스.', must: '타일 벽화 감상', rating: '4.8', walk: '도보 5분', hours: '06:00~01:00 (역 로비)', review: '긍정: 아줄레주 타일이 압도적. 무료라 부담없음. 부정: 사진 찍는 사람이 많아 혼잡.' },
+    { name: '클레리구스 탑', cat: 'spot', lat: 41.1457, lng: -8.6144, price: '€8', desc: '76m 높이 바로크 탑. 225개 계단 올라가면 포르투 360도 파노라마. 해질녘 추천.', must: '전망대', rating: '4.5', walk: '도보 5분', hours: '09:00~19:00', review: '긍정: 360도 파노라마 뷰 최고. 부정: 225계단 힘듦. 좁은 나선형 계단.' },
+    { name: 'Livraria Lello', cat: 'spot', lat: 41.1469, lng: -8.6149, price: '€5', desc: '해리포터 영감의 서점. 빨간 계단이 상징. 30분 웨이팅 가능. 책 구매 시 입장료 차감.', must: '빨간 계단 사진', rating: '4.2', walk: '도보 5분', hours: '09:30~19:00', review: '긍정: 인테리어 압도적. 사진 잘 나옴. 부정: 입장료 €8, 30분+ 대기, 사람 너무 많음.' },
+    { name: '히베이라 광장', cat: 'spot', lat: 41.1409, lng: -8.6135, price: '무료', desc: 'UNESCO 세계유산. 도우루 강변 컬러풀한 건물들. 야경이 특히 아름다움.', must: '야경 감상', rating: '4.7', walk: '도보 12분', hours: '24시간', review: '긍정: 야경 환상적. 무료 산책 코스. 부정: 소매치기 주의. 강변 레스토랑 바가지.' },
+    { name: '루이스 1세 다리', cat: 'spot', lat: 41.1397, lng: -8.6094, price: '무료', desc: '포르투 상징. 상층 도보 횡단하면 양쪽 스카이라인+석양 환상적. 비긴 어게인2 촬영지.', must: '상층 도보 횡단', rating: '4.8', walk: '도보 15분', hours: '24시간', review: '긍정: 상층 도보 횡단 시 양쪽 뷰 압도적. 부정: 바람 많이 불 수 있음. 높이 무서운 사람 주의.' },
+    { name: '카르무 성당', cat: 'spot', lat: 41.1473, lng: -8.6164, price: '무료', desc: '측면 전체가 아줄레주 타일. 포르투 최고의 포토스팟 중 하나.', must: '외벽 사진', rating: '4.5', walk: '도보 6분', hours: '09:00~18:00', review: '긍정: 외벽 아줄레주 포토스팟 최고. 무료. 부정: 내부는 소박. 빠르게 볼 수 있음.' },
+    { name: '포르투 대성당 (Sé)', cat: 'spot', lat: 41.1430, lng: -8.6110, price: '무료/€3', desc: '12세기 로마네스크 성당. 테라스에서 구시가 전경. 내부 회랑의 아줄레주 아름다움.', must: '테라스 전경', rating: '4.4', walk: '도보 8분', hours: '09:00~12:30, 14:30~19:00', review: '긍정: 테라스 전경 좋음. 회랑 아줄레주 아름다움. 부정: 회랑 유료 €3.' },
+    { name: 'Serra do Pilar', cat: 'spot', lat: 41.1380, lng: -8.6070, price: '무료', desc: '가이아 쪽 최고 석양 전망대. 포르투 구시가 전체가 한눈에. 와인 한잔과 함께.', must: '석양', rating: '4.9', walk: '다리 건너 10분', hours: '일몰 전후 추천', review: '긍정: 포르투 최고 석양 포인트. 무료. 부정: 다리 건너야 해서 도보 거리 있음.' },
+
+    // 카페/바
+    { name: 'Majestic Café', cat: 'cafe', lat: 41.1488, lng: -8.6070, price: '€€', desc: '1921년 아르누보 카페. 세상에서 가장 아름다운 카페 중 하나. 커피 €7 비싸지만 분위기값.', must: '비카(에스프레소)', rating: '4.3', walk: '도보 5분', hours: '09:00~23:00', review: '긍정: 인테리어 압도적. 역사 카페 경험. 부정: 커피 €7 비쌈. 관광객 많음.' },
+    { name: 'Combi Coffee', cat: 'cafe', lat: 41.1470, lng: -8.6120, price: '€', desc: '포르투 스페셜티 커피. 미니멀한 공간. 현지 로스터리. 진짜 커피 맛.', must: '플랫화이트', rating: '4.5', walk: '도보 6분', hours: '09:00~18:00 (주말 10:00~)', review: '긍정: 포르투 최고 스페셜티. 로스팅 퀄리티. 부정: 좌석 적음.' },
+    { name: 'Wine Quay Bar', cat: 'cafe', lat: 41.1408, lng: -8.6140, price: '€€', desc: '히베이라 강변 와인 바. 포트와인+치즈 보드 세트 추천. 야경 명당.', must: '타우니+치즈보드', rating: '4.4', walk: '도보 13분', hours: '12:00~00:00', review: '긍정: 강변 뷰+와인 조합 최고. 소믈리에 친절. 부정: 주말 만석. 가격 약간 높음.' },
+    { name: 'Graham\'s Port Lodge', cat: 'cafe', lat: 41.1370, lng: -8.6150, price: '€€', desc: '가이아 쪽 프리미엄 와인 셀러 바. 테라스에서 포르투 야경이 압도적.', must: '20년산 타우니', rating: '4.7', walk: '다리 건너 15분', hours: '10:00~18:00 (투어), 바 ~20:00', review: '긍정: 테라스 뷰 포르투 1등. 20년산 타우니 환상적. 부정: 언덕 올라가야 함.' },
+    { name: 'Café Luso', cat: 'cafe', lat: 41.1445, lng: -8.6095, price: '€', desc: '로컬 카페. 관광객 없고 포르투 일상 느낌. 에그타르트+비카 조합.', must: '나타+비카', rating: '4.1', walk: '도보 8분', hours: '08:00~20:00', review: '긍정: 현지 로컬 분위기. 에그타르트 맛있음. 가격 저렴. 부정: 인테리어 소박.' },
+
+    // 놀거리
+    { name: 'Sandeman 와인 셀러', cat: 'activity', lat: 41.1375, lng: -8.6130, price: '€15~', desc: '가장 유명한 포트와인 셀러. 검은 망토 남자 로고. 투어 45분+테이스팅 3종.', must: '투어+테이스팅', rating: '4.5', walk: '다리 건너 12분', hours: '10:00~18:00 (투어 매시간)', review: '긍정: 가이드 설명 재미있음. 테이스팅 3종 포함. 부정: 상업적 느낌. 기념품샵 유도.' },
+    { name: '도우루 크루즈', cat: 'activity', lat: 41.1405, lng: -8.6120, price: '€15', desc: '6개 다리를 지나는 50분 리버 크루즈. 히베이라에서 출발. 해질녘 추천.', must: '석양 크루즈', rating: '4.3', walk: '도보 13분', hours: '10:00~18:00 (매시간 출발)', review: '긍정: 6개 다리 뷰 색다름. 편안함. 부정: 50분 짧음. 해설 없는 배도 있음.' },
+    { name: '볼량 시장', cat: 'activity', lat: 41.1502, lng: -8.6053, price: '무료', desc: '포르투 전통 재래시장. 신선한 과일·치즈·생선. 현지 분위기 체험. 점심 해결 가능.', must: '시장 점심', rating: '4.4', walk: '도보 6분', hours: '08:00~20:00 (일 휴무)', review: '긍정: 리모델링 후 깔끔. 과일 저렴. 현지 분위기. 부정: 일요일 닫음. 2층 식당 비쌈.' },
+
+    // 쇼핑
+    { name: 'Claus Porto', cat: 'shop', lat: 41.1460, lng: -8.6115, price: '€5~10', desc: '포르투갈 프리미엄 비누. 선물용 베스트. 디자인 예쁘고 가벼움.', must: '비누 10개', rating: '4.6', walk: '도보 5분', hours: '10:00~19:30', review: '긍정: 디자인 예쁘고 향 좋음. 선물 반응 최고. 부정: 비누치고 비쌈 (€9~15).' },
+    { name: 'A Vida Portuguesa', cat: 'shop', lat: 41.1465, lng: -8.6140, price: '€3~15', desc: '감성 기념품샵. 통조림·비누·빈티지 디자인 제품. 유럽 감성 선물.', must: '정어리 통조림', rating: '4.5', walk: '도보 5분', hours: '10:00~20:00', review: '긍정: 통조림 패키지 감성 최고. 다양한 선택. 부정: 가격 관광지 수준.' },
+    { name: 'Garrafeira do Carmo', cat: 'shop', lat: 41.1475, lng: -8.6155, price: '€8~20', desc: '포트와인 전문점. 합리적 가격. 미니병 있음. 직원 추천 잘해줌.', must: '타우니 미니병', rating: '4.4', walk: '도보 6분', hours: '10:00~19:30', review: '긍정: 와인 종류 많고 직원 추천 잘해줌. 가격 합리적. 부정: 가게 좁음.' },
+];
+
+const catColors = {
+    food: '#e74c3c',
+    spot: '#f39c12',
+    cafe: '#9b59b6',
+    activity: '#2ecc71',
+    shop: '#e67e22'
+};
+const catEmoji = {
+    food: '🍽️',
+    spot: '📸',
+    cafe: '☕',
+    activity: '🎯',
+    shop: '🛍️'
+};
+const catNames = {
+    food: '맛집',
+    spot: '명소',
+    cafe: '카페/바',
+    activity: '놀거리',
+    shop: '쇼핑'
+};
+
+// ── Bus Map ──
+const busMap = L.map('busMap', { zoomControl: true, scrollWheelZoom: false }).setView([39.9, -8.9], 7);
+L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ko', { attribution: '&copy; Google Maps', maxZoom: 18 }).addTo(busMap);
+
+// Sete Rios marker
+L.marker([seteRios.lat, seteRios.lng], {
+    icon: L.divIcon({ className: '', html: '<div style="background:#e74c3c;color:#fff;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🚌 Sete Rios 출발</div>', iconAnchor: [60, 15] })
+}).addTo(busMap);
+
+// Campanhã marker
+L.marker([campanha.lat, campanha.lng], {
+    icon: L.divIcon({ className: '', html: '<div style="background:#06C167;color:#000;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🚌 Campanhã 도착</div>', iconAnchor: [60, 15] })
+}).addTo(busMap);
+
+// Hotel marker
+L.marker([hotel.lat, hotel.lng], {
+    icon: L.divIcon({ className: '', html: '<div style="background:#276EF1;color:#fff;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🏨 Porto Trindade</div>', iconAnchor: [55, 15] })
+}).addTo(busMap);
+
+// Route line
+L.polyline([[seteRios.lat, seteRios.lng], [campanha.lat, campanha.lng]], { color: '#722F37', weight: 3, dashArray: '8,6', opacity: 0.8 }).addTo(busMap);
+L.polyline([[campanha.lat, campanha.lng], [hotel.lat, hotel.lng]], { color: '#276EF1', weight: 3, dashArray: '4,4', opacity: 0.8 }).addTo(busMap);
+
+// ── Main Map ──
+const mainMap = L.map('mainMap', { zoomControl: true, scrollWheelZoom: true }).setView([hotel.lat, hotel.lng], 15);
+L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ko', { attribution: '&copy; Google Maps', maxZoom: 20 }).addTo(mainMap);
+
+// Custom location control on map
+L.Control.Location = L.Control.extend({
+    onAdd: function(map) {
+        const btn = L.DomUtil.create('div');
+        btn.innerHTML = '<button onclick="toggleMyLocation();event.stopPropagation();" style="width:36px;height:36px;border-radius:8px;background:#fff;border:1px solid #ccc;box-shadow:0 2px 6px rgba(0,0,0,0.15);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;" title="내 현재 위치"><span>📍</span></button>';
+        L.DomEvent.disableClickPropagation(btn);
+        return btn;
+    }
+});
+new L.Control.Location({ position: 'topright' }).addTo(mainMap);
+
+// Hotel glow
+[
+    { r: 200, opacity: 0.06 },
+    { r: 130, opacity: 0.12 },
+    { r: 70, opacity: 0.2 }
+].forEach(s => {
+    L.circle([hotel.lat, hotel.lng], { radius: s.r, fillColor: '#276EF1', fillOpacity: s.opacity, stroke: false }).addTo(mainMap);
+});
+
+// Hotel marker
+L.marker([hotel.lat, hotel.lng], {
+    icon: L.divIcon({
+        className: '',
+        html: '<div style="position:relative;width:40px;height:40px;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:50px;height:50px;border-radius:50%;background:radial-gradient(circle,rgba(39,110,241,0.5),transparent 70%);animation:hotelPulse 2s ease-in-out infinite;" class="hotel-glow-anim"></div><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:#276EF1;border:3px solid #fff;box-shadow:0 0 12px rgba(39,110,241,0.6);"></div></div>',
+        iconSize: [40, 40], iconAnchor: [20, 20]
+    })
+}).addTo(mainMap).bindPopup('<strong>🏨 Porto Trindade Hotel</strong><br>3/31~4/3 · 3박');
+
+L.marker([hotel.lat, hotel.lng], {
+    icon: L.divIcon({
+        className: '',
+        html: '<div style="font-size:10px;font-weight:700;color:#276EF1;white-space:nowrap;text-shadow:0 0 4px #fff,0 0 8px #fff,0 0 12px #fff;">🏨 Porto Trindade Hotel</div>',
+        iconAnchor: [-10, 5]
+    })
+}).addTo(mainMap);
+
+// POI markers
+let poiMarkers = [];
+
+function addPOIMarkers(filter) {
+    poiMarkers.forEach(m => mainMap.removeLayer(m));
+    poiMarkers = [];
+    pois.forEach((p, i) => {
+        if (filter !== 'all' && p.cat !== filter) return;
+        const color = catColors[p.cat];
+        const emoji = catEmoji[p.cat];
+        const m = L.marker([p.lat, p.lng], {
+            icon: L.divIcon({
+                className: '',
+                html: '<div style="width:24px;height:24px;border-radius:50%;background:'+color+';color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer;">'+emoji+'</div>',
+                iconSize: [24, 24], iconAnchor: [12, 12]
+            })
+        }).addTo(mainMap);
+        m.bindPopup('<strong>'+p.name+'</strong><br><span style="color:'+color+';font-weight:600;">'+catNames[p.cat]+'</span> · '+p.price+'<br>'+p.desc+'<br><button onclick="showWalkingRoute('+p.lat+','+p.lng+',\''+p.name.replace(/'/g,"\\'")+'\')" style="margin-top:6px;padding:4px 10px;border-radius:100px;border:1px solid #e74c3c;background:#fff;color:#e74c3c;font-size:11px;font-weight:700;cursor:pointer;">🚶 도보 경로</button>');
+        poiMarkers.push(m);
+    });
+}
+
+addPOIMarkers('all');
+
+// ── My Location (Red Marker) ──
+let myLocMarker = null;
+let myLocCircle = null;
+let myLocWatchId = null;
+let myLocTracking = false;
+let myLatLng = null;
+let activeRouteLine = null;
+
+function toggleMyLocation() {
+    const btn = document.getElementById('myLocBtn');
+    if (myLocTracking) {
+        if (myLocWatchId !== null) { navigator.geolocation.clearWatch(myLocWatchId); myLocWatchId = null; }
+        if (myLocMarker) { mainMap.removeLayer(myLocMarker); myLocMarker = null; }
+        if (myLocCircle) { mainMap.removeLayer(myLocCircle); myLocCircle = null; }
+        myLocTracking = false; myLatLng = null;
+        btn.classList.remove('tracking');
+        clearRoute();
+        return;
+    }
+    if (!navigator.geolocation) { alert('위치 서비스를 지원하지 않습니다.'); return; }
+    myLocTracking = true;
+    btn.classList.add('tracking');
+    navigator.geolocation.getCurrentPosition(onLocFound, onLocErr, { enableHighAccuracy: true, timeout: 10000 });
+    myLocWatchId = navigator.geolocation.watchPosition(onLocFound, onLocErr, { enableHighAccuracy: true });
+}
+
+function onLocFound(pos) {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude, acc = pos.coords.accuracy;
+    myLatLng = [lat, lng];
+    if (myLocMarker) {
+        myLocMarker.setLatLng([lat, lng]);
+        myLocCircle.setLatLng([lat, lng]).setRadius(acc);
+    } else {
+        myLocCircle = L.circle([lat, lng], { radius: acc, fillColor: '#e74c3c', fillOpacity: 0.1, stroke: true, color: '#e74c3c', weight: 1, opacity: 0.3 }).addTo(mainMap);
+        myLocMarker = L.marker([lat, lng], {
+            zIndexOffset: 1000,
+            icon: L.divIcon({
+                className: '',
+                html: '<div style="width:18px;height:18px;border-radius:50%;background:#e74c3c;border:3px solid #fff;box-shadow:0 0 10px rgba(231,76,60,0.6),0 0 20px rgba(231,76,60,0.3);"></div>',
+                iconSize: [18, 18], iconAnchor: [9, 9]
+            })
+        }).addTo(mainMap).bindPopup('<strong style="color:#e74c3c;">📍 내 현재 위치</strong>');
+        mainMap.flyTo([lat, lng], 16, { duration: 0.8 });
+    }
+}
+
+function onLocErr(err) {
+    document.getElementById('myLocBtn').classList.remove('tracking');
+    myLocTracking = false;
+    // 토스트로 조용히 알림 (alert 대신)
+    const msg = err.code === 1 ? '카카오톡에서는 위치 불가 — 우측 상단 ⋮ → Chrome으로 열기' : '위치를 찾을 수 없습니다';
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:10px 20px;border-radius:100px;font-size:0.75rem;font-weight:600;z-index:9999;opacity:0;transition:opacity 0.3s;';
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.style.opacity = '1');
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+// ── OSRM Walking Route ──
+async function fetchWalkingRoute(from, to) {
+    const url = 'https://router.project-osrm.org/route/v1/foot/' +
+        from[1]+','+from[0]+';'+to[1]+','+to[0] +
+        '?overview=full&geometries=geojson';
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.routes && data.routes[0]) {
+            const route = data.routes[0];
+            const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+            const distM = route.distance;
+            const durS = route.duration;
+            return { coords, distance: distM, duration: durS };
+        }
+    } catch(e) { console.warn('OSRM error:', e); }
+    return null;
+}
+
+let routeLabel = null;
+
+async function showWalkingRoute(destLat, destLng, destName) {
+    if (!myLatLng) {
+        toggleMyLocation();
+        return;
+    }
+    clearRoute();
+    const result = await fetchWalkingRoute(myLatLng, [destLat, destLng]);
+    if (result) {
+        activeRouteLine = L.polyline(result.coords, {
+            color: '#000', weight: 4, opacity: 0.8,
+            dashArray: '8,6'
+        }).addTo(mainMap);
+        const mins = Math.round(result.duration / 60);
+        const dist = result.distance >= 1000 ? (result.distance/1000).toFixed(1)+'km' : Math.round(result.distance)+'m';
+        // Map label at midpoint of route
+        const midIdx = Math.floor(result.coords.length / 2);
+        const midPt = result.coords[midIdx];
+        routeLabel = L.marker(midPt, {
+            interactive: false,
+            icon: L.divIcon({
+                className: '',
+                html: '<div style="color:#000;font-size:28px;font-weight:900;white-space:nowrap;text-shadow:0 0 8px #fff,0 0 16px #fff,0 0 24px #fff;">도보 ' + mins + '분 · ' + dist + '</div>',
+                iconAnchor: [80, 22]
+            })
+        }).addTo(mainMap);
+        document.getElementById('routeInfoText').textContent = '🚶 ' + destName + ' · 도보 ' + mins + '분 · ' + dist;
+        document.getElementById('routeInfo').classList.add('visible');
+        mainMap.fitBounds(activeRouteLine.getBounds().pad(0.3));
+    } else {
+        alert('경로를 불러올 수 없습니다.');
+    }
+}
+
+function clearRoute() {
+    if (activeRouteLine) { mainMap.removeLayer(activeRouteLine); activeRouteLine = null; }
+    if (routeLabel) { mainMap.removeLayer(routeLabel); routeLabel = null; }
+    document.getElementById('routeInfo').classList.remove('visible');
+}
+
+function filterPOI(cat) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+    addPOIMarkers(cat);
+}
+
+// ── Populate Grid Cards ──
+function renderCards(containerId, cat) {
+    const grid = document.getElementById(containerId);
+    const items = pois.filter(p => p.cat === cat);
+    grid.innerHTML = items.map(p => `
+        <div class="poi-card" onclick="mainMap.flyTo([${p.lat},${p.lng}],17,{duration:0.5});if(myLatLng)showWalkingRoute(${p.lat},${p.lng},'${p.name.replace(/'/g,"\\'")}')">
+            <div class="poi-name">${p.name}</div>
+            <div class="poi-meta">${p.price} · ⭐ ${p.rating} · ${p.walk}</div>
+            <div class="poi-desc">${p.desc}</div>
+            ${p.must ? '<div class="poi-tags"><div class="poi-tag">필수: '+p.must+'</div></div>' : ''}
+            ${p.hours ? '<div style="font-size:0.62rem;color:#06C167;margin-top:6px;font-weight:600;">🕐 '+p.hours+'</div>' : ''}
+            ${p.review ? '<div style="font-size:0.62rem;color:#999;margin-top:4px;line-height:1.45;padding:6px 8px;background:#F6F6F6;border-radius:6px;font-size:0.6rem;">💬 '+p.review+'</div>' : ''}
+            <div class="poi-links" style="margin-top:auto;padding-top:8px;">
+                <a href="https://www.google.com/maps/search/${encodeURIComponent(p.name+' Porto')}" target="_blank" class="poi-link google">G 지도</a>
+                <a href="https://section.blog.naver.com/Search/Post.naver?pageNo=1&rangeType=ALL&orderBy=sim&keyword=${encodeURIComponent(p.name+' 포르투 후기')}" target="_blank" class="poi-link naver">N 후기</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+renderCards('foodGrid', 'food');
+renderCards('spotsGrid', 'spot');
+renderCards('cafesGrid', 'cafe');
+renderCards('activitiesGrid', 'activity');
+
+// ── Section Nav Scroll ──
+function scrollToSection(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.section-nav-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+// Highlight nav on scroll
+const sections = ['hero','bus','map','food','spots','cafes','activities','wine','shopping'];
+window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY + 120;
+    let current = 'hero';
+    sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= scrollY) current = id;
+    });
+    document.querySelectorAll('.section-nav-btn').forEach(b => {
+        b.classList.toggle('active', b.textContent.includes(current === 'hero' ? '소개' : current === 'bus' ? '이동' : current === 'map' ? '지도' : current === 'food' ? '맛집' : current === 'spots' ? '볼것' : current === 'cafes' ? '카페' : current === 'activities' ? '놀거리' : current === 'wine' ? '와인' : '쇼핑'));
+    });
+});
+
+// Fix map size when scrolled into view
+const mapObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { mainMap.invalidateSize(); busMap.invalidateSize(); } });
+}, { threshold: 0.1 });
+mapObserver.observe(document.getElementById('mainMap'));
+mapObserver.observe(document.getElementById('busMap'));
+
+// ── View Mode Toggle ──
+function setViewMode(mode) {
+    document.body.classList.remove('mobile-mode', 'desktop-mode');
+    document.body.classList.add(mode + '-mode');
+    document.querySelectorAll('.view-toggle-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    const mapEl = document.getElementById('mainMap');
+    const mobileFixed = document.getElementById('mobileMapFixed');
+    const desktopSlot = document.getElementById('desktopMapSlot');
+    if (mode === 'mobile') {
+        // Move map into fixed top area
+        mobileFixed.appendChild(mapEl);
+        mapEl.style.height = '100%';
+        mapEl.style.borderRadius = '0';
+    } else {
+        // Move map back to desktop slot
+        desktopSlot.appendChild(mapEl);
+        mapEl.style.height = '';
+        mapEl.style.borderRadius = '';
+    }
+    setTimeout(() => { mainMap.invalidateSize(); busMap.invalidateSize(); }, 400);
+    try { localStorage.setItem('portoViewMode', mode); } catch(e) {}
+}
+
+// Restore saved mode
+(function() {
+    try {
+        const saved = localStorage.getItem('portoViewMode');
+        if (saved === 'mobile') setViewMode('mobile');
+    } catch(e) {}
+})();
+
+// ── Mobile Tab Nav ──
+function mobileNav(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+
+// Highlight mobile tab on scroll
+const mobileSections = ['hero','bus','map','food','spots','wine'];
+const mobileTabLabels = ['소개','이동','지도','맛집','명소','와인'];
+window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY + 120;
+    let idx = 0;
+    mobileSections.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= scrollY) idx = i;
+    });
+    document.querySelectorAll('.mobile-tab').forEach((t, i) => {
+        t.classList.toggle('active', i === idx);
+    });
+});
+
+// ── Copy Text ──
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.createElement('div');
+        toast.textContent = '✅ ' + text + ' 복사됨';
+        toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 18px;border-radius:8px;font-size:0.75rem;z-index:9999;';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1500);
+    });
+}
+</script>
+</body>
+</html>
